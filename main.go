@@ -63,6 +63,7 @@ func main() {
 		err     error
 		items   []Item
 	)
+	keys := make(map[string]int)
 
 	if err = f.Parse(os.Args[1:]); err != nil {
 		fmt.Println(err.Error())
@@ -87,6 +88,12 @@ func main() {
 	// copy the shell environment
 	if *ignoreFlag == false {
 		environ = os.Environ()
+
+		// parse existing environment
+		for i, e := range environ {
+			chk := strings.Split(e, "=")
+			keys[chk[0]] = i
+		}
 	}
 
 	// pull items from dynamo
@@ -102,6 +109,12 @@ func main() {
 
 	// join items to environ
 	for _, item := range items {
+		if *ignoreFlag == false {
+			if _, exists := keys[item.Name]; exists {
+				environ[keys[item.Name]] = item.String()
+				continue
+			}
+		}
 		environ = append(environ, item.String())
 	}
 
